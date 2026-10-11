@@ -14,6 +14,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Date
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,6 +26,15 @@ class PeeViewModel @Inject constructor(val peeDao: PeeDao): ViewModel() {
 
     fun changeDate(newDate: LocalDate) {
         _selectedDate.value = newDate
+    }
+
+//    var currentData = PeeEntity(date = _selectedDate.value.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+//        , amount = 0)
+
+    private val _currentData = MutableStateFlow<PeeEntity?>(null)
+    val currentData: StateFlow<PeeEntity?> = _currentData.asStateFlow()
+    fun changeCurrentDate(current: PeeEntity?) {
+        _currentData.value = current
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,6 +74,21 @@ class PeeViewModel @Inject constructor(val peeDao: PeeDao): ViewModel() {
 
     suspend fun delete(peeData: PeeEntity) {
         peeDao.delete(peeData)
+    }
+
+    suspend fun save(date: LocalDateTime, amount: Int) {
+        val entity = PeeEntity(
+            // currentData が null なら 0（新規登録時の自動採番用など）、あれば既存の id を使う
+            id = currentData.value?.id ?: 0,
+//            date = date.toEpochSecond(ZoneOffset.ofHours(+9)),
+            date = date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+            amount = amount
+        )
+        if (currentData.value == null) {
+            insert(entity)
+        } else {
+            update(entity)
+        }
     }
 }
 
