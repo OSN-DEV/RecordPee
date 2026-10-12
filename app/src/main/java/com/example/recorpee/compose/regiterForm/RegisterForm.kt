@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
@@ -23,12 +24,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,6 +52,7 @@ import java.util.Locale
 @Composable
 fun RegisterForm(navController: NavController, viewModel: PeeViewModel) {
     val selectedDate by viewModel.selectedDate.collectAsState()
+    val focusRequester = remember { FocusRequester() }
 
     Column(
         modifier = Modifier
@@ -60,12 +65,25 @@ fun RegisterForm(navController: NavController, viewModel: PeeViewModel) {
             restore = { LocalDateTime.parse(it) }
         )
         val currentData by viewModel.currentData.collectAsState()
-        val amountText = rememberTextFieldState(
-            initialText = viewModel.currentData.value?.amount?.toString() ?: "0"
-        )
+        val amountText = rememberTextFieldState(initialText = "")
 
         var baseDateTime by rememberSaveable(stateSaver = LocalDateTimeSaver) {
             mutableStateOf(LocalDateTime.now())
+        }
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+        LaunchedEffect(currentData) {
+            val nextText = currentData?.amount?.toString() ?: ""
+            // 現在のテキストと異なる場合のみ更新（無限ループ防止）
+            if (amountText.text.toString() != nextText) {
+                amountText.edit {
+                    // テキスト全体を置き換える
+                    replace(0, length, nextText)
+                }
+            }
+            baseDateTime = LocalDateTime.now()
         }
         val coroutineScope = rememberCoroutineScope()
 
@@ -79,10 +97,10 @@ fun RegisterForm(navController: NavController, viewModel: PeeViewModel) {
 
         TextField(
             state = amountText,
+            modifier = Modifier.focusRequester(focusRequester),
             textStyle = TextStyle(fontSize = 72.sp, textAlign = TextAlign.Center),
             trailingIcon = { Text("ml", style = MaterialTheme.typography.bodyMedium) },
             lineLimits = TextFieldLineLimits.SingleLine,
-//            inputTransformation = InputTransformation.maxLength(4),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             inputTransformation = InputTransformation.maxLength(4).then(
                 InputTransformation {

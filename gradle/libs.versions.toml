@@ -13,6 +13,7 @@ navigationCompose = "2.5.0"
 room3Compiler = "3.0.3"
 
 [libraries]
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room3Compiler" }

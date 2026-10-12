@@ -12,9 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.activity.viewModels
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.recorpee.compose.PeeViewModel
 import com.example.recorpee.ui.theme.RecorPeeTheme
@@ -51,9 +57,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
+            // 1. 現在のバックスタックエントリを取得してルートを監視する
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
-                    containerColor = androidx.compose.ui.graphics.Color(0xFFF9F9FB)
+                    containerColor = androidx.compose.ui.graphics.Color(0xFFF9F9FB),
+                // 2. DataScreen の場合のみ FloatingActionButton を配置する
+                floatingActionButton = {
+                    if (currentRoute == ScreenNav.DataScreen.route) {
+                        FloatingActionButton(
+                            onClick = {
+                                navController.navigate(ScreenNav.RootScreen.route)
+                            }
+                        ) {
+                            // アイコンは適宜好みのものに変更してください（例: 追加アイコン）
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Register"
+                            )
+                        }
+                    }
+                }
             ) { innerPadding ->
                 NavHost(
                     navController = navController,
