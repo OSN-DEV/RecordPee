@@ -25,11 +25,13 @@ import com.example.recorpee.compose.PeeViewModel
 import com.example.recorpee.ui.theme.RecorPeeTheme
 import java.time.LocalDate
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toString
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -37,6 +39,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.time.Instant
+import android.app.DatePickerDialog
 
 @Composable
 fun DataList(navController: NavController, viewModel: PeeViewModel) {
@@ -55,10 +58,35 @@ fun DataList(navController: NavController, viewModel: PeeViewModel) {
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
         var baseDateTime by remember { mutableStateOf(LocalDateTime.now()) }
         val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd(E)", Locale.JAPANESE)
-        Text(text = baseDateTime.format(dateFormatter), fontSize = 24.sp)
+
+        Text(text = baseDateTime.format(dateFormatter),
+            fontSize = 24.sp,
+            modifier = Modifier
+                .clickable{
+                    val year = baseDateTime.year
+                    val month = baseDateTime.monthValue - 1
+                    val day = baseDateTime.dayOfMonth
+                    DatePickerDialog(
+                        context,
+                        { _, selectedYear, selectedMonth, selectedDayOfMonth ->
+                            // 選択された日付で baseDateTime を更新（時刻や曜日は引き継ぎ、年月日は新しいものにする）
+                            val newDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDayOfMonth)
+                            baseDateTime = LocalDateTime.of(newDate, baseDateTime.toLocalTime())
+
+                            // TODO: 必要に応じて viewModel 側で「選択された日付（newDate）」に基づいたデータ取得・フィルタリング処理を呼び出す
+                            // 例: viewModel.loadDataByDate(newDate)
+                            viewModel.changeDate(newDate)
+                        },
+                        year,
+                        month,
+                        day
+                    ).show()
+                }
+        )
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(text = totalAmount.toString() + "ml (" + totalCount.toString() + "回)", fontSize = 46.sp)
